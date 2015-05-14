@@ -9,25 +9,14 @@ $DN = "DC=company,DC=com"
 ########################################
 
 ##############Function##################
-function PreparePasswordPolicyMail ($ComplexityEnabled,$MaxPasswordAge,$MinPasswordAge,$MinPasswordLength,$PasswordHistoryCount)
-{
-    $verbosemailBody = "Below is a summary of the applied Password Policy settings:`r`n`r`n"
-    $verbosemailBody += "Complexity Enabled = " + $ComplexityEnabled + "`r`n`r`n"
-    $verbosemailBody += "Maximum Password Age = " + $MaxPasswordAge + "`r`n`r`n"
-    $verbosemailBody += "Minimum Password Age = " + $MinPasswordAge + "`r`n`r`n"
-    $verbosemailBody += "Minimum Password Length = " + $MinPasswordLength + "`r`n`r`n"
-    $verbosemailBody += "Remembered Password History = " + $PasswordHistoryCount + "`r`n`r`n"
-    return $verbosemailBody
-}
-
-function SendMail ($SMTPserver,$sendermailaddress,$usermailaddress,$mailBody)
+function SendMail ($SMTPserver,$sendermailaddress,$usermailaddress,$mailSubject,$mailBody)
 {
     $smtpServer = $SMTPserver
     $msg = new-object Net.Mail.MailMessage
     $smtp = new-object Net.Mail.SmtpClient($smtpServer)
     $msg.From = $sendermailaddress
     $msg.To.Add($usermailaddress)
-    $msg.Subject = "Your password is about to expire"
+    $msg.Subject = $mailSubject
     $msg.Body = $mailBody
     $smtp.Send($msg)
 }
@@ -45,7 +34,7 @@ if($passwordexpirydefaultdomainpolicy)
         $defaultdomainpolicyverbosemailBody = PreparePasswordPolicyMail $PSOpolicy.ComplexityEnabled $PSOpolicy.MaxPasswordAge.Days $PSOpolicy.MinPasswordAge.Days $PSOpolicy.MinPasswordLength $PSOpolicy.PasswordHistoryCount
     }
 }
-            
+
 foreach ($user in (Get-ADUser -SearchBase $DN -Filter * -properties mail))
 {
     $samaccountname = $user.samaccountname
@@ -55,20 +44,20 @@ foreach ($user in (Get-ADUser -SearchBase $DN -Filter * -properties mail))
         $PSOpolicy = Get-ADUserResultantPasswordPolicy -Identity $samaccountname
         $PSOMaxPasswordAge = $PSOpolicy.MaxPasswordAge.days
         $pwdlastset = [datetime]::FromFileTime((Get-ADUser -LDAPFilter "(&(samaccountname=$samaccountname))" -properties pwdLastSet).pwdLastSet)            
-        $expirydate = ($pwdlastset).AddDays($PSOMaxPasswordAge)            
-        $delta = ($expirydate - (Get-Date)).Days
-        $comparionresults = (($delta -eq $notificationFirst) -OR ($delta -eq $notificationSecond) -OR ($delta -le $notificationThird)) -AND ($delta -ge 1)
-        if ($comparionresults)            
-        {            
-            $mailBody = "Hi " + $user.GivenName + ",`r`n`r`n"            
-            $mailBody += "Your password will expire in " + $delta + " day(s). To avoid getting locked out of your account, please be sure to update it before then.`r`n`r`nCurrently, there is no way to change your password if you are off the network, so feel free to contact us before the expiration date with a new password and we’ll be happy to update it for you.`r`n`r`n"            
-            if ($verbose)            
+        $expirydate = ($pwdlastset).AddDays($PSOMaxPasswordAge)
+        if ($user.accountexpirationdate -lt $expirydate)
+        {
+            $delta = ($expirydate - (Get-Date)).Days
+            $comparionresults = (($delta -eq $notificationFirst) -OR ($delta -eq $notificationSecond) -OR ($delta -le $notificationThird)) -AND ($delta -ge 1)
+            if ($comparionresults)            
             {            
-                $mailBody += PreparePasswordPolicyMail $PSOpolicy.ComplexityEnabled $PSOpolicy.MaxPasswordAge.Days $PSOpolicy.MinPasswordAge.Days $PSOpolicy.MinPasswordLength $PSOpolicy.PasswordHistoryCount
+                $mailBody = "Hi " + $user.GivenName + ",`r`n`r`n"            
+                $mailBody += "Your password will expire in " + $delta + " day(s). To avoid getting locked out of your account, please be sure to update it before then.`r`n`r`nCurrently, there is no way to change your password if you are off the network, so feel free to contact us before the expiration date with a new password and we'll be happy to update it for you.`r`n`r`n"            
+                $mailBody += "`r`n`r`n-Your Friendly IT Department"
+                $usermailaddress = $user.mail
+                $mailSubject = "Your password will expire in $delta day(s) NOT NULL"
+                SendMail $SMTPserver $sendermailaddress $usermailaddress $mailSubject $mailBody
             }
-            $mailBody += "`r`n`r`n-Your Friendly IT Department"
-            $usermailaddress = $user.mail
-            SendMail $SMTPserver $sendermailaddress $usermailaddress $mailBody
         }
     }
     else
@@ -77,22 +66,22 @@ foreach ($user in (Get-ADUser -SearchBase $DN -Filter * -properties mail))
         {
             $pwdlastset = [datetime]::FromFileTime((Get-ADUser -LDAPFilter "(&(samaccountname=$samaccountname))" -properties pwdLastSet).pwdLastSet)
             $expirydate = ($pwdlastset).AddDays($defaultdomainpolicyMaxPasswordAge)
-            $delta = ($expirydate - (Get-Date)).Days
-            $comparionresults = (($delta -eq $notificationFirst) -OR ($delta -eq $notificationSecond) -OR ($delta -le $notificationThird)) -AND ($delta -ge 1)
-            if ($comparionresults)
+            if ($user.accountexpirationdate -lt $expirydate)
             {
-                $mailBody = "Hi " + $user.GivenName + ",`r`n`r`n"
                 $delta = ($expirydate - (Get-Date)).Days
-                $mailBody += "Your password will expire in " + $delta + " day(s). To avoid getting locked out of your account, please be sure to update it before then.`r`n`r`nCurrently, there is no way to change your password if you are off the network, so feel free to contact us before the expiration date with a new password and we’ll be happy to update it for you.`r`n`r`n"
-                if ($verbose)
+                $comparionresults = (($delta -eq $notificationFirst) -OR ($delta -eq $notificationSecond) -OR ($delta -le $notificationThird)) -AND ($delta -ge 1)
+                if ($comparionresults)
                 {
-                    $mailBody += $defaultdomainpolicyverbosemailBody
+                    $mailBody = "Hi " + $user.GivenName + ",`r`n`r`n"
+                    $delta = ($expirydate - (Get-Date)).Days
+                    $mailBody += "Your password will expire in " + $delta + " day(s). To avoid getting locked out of your account, please be sure to update it before then.`r`n`r`nCurrently, there is no way to change your password if you are off the network, so feel free to contact us before the expiration date with a new password and we'll be happy to update it for you.`r`n`r`n"
+                    $mailBody += "`r`n`r`n-Your Friendly IT Department"
+                    $usermailaddress = $user.mail
+                    $mailSubject = "Your password will expire in $delta day(s) NULL"
+                    SendMail $SMTPserver $sendermailaddress $usermailaddress $mailSubject $mailBody
                 }
-                $mailBody += "`r`n`r`n-Your Friendly IT Department"
-                $usermailaddress = $user.mail
-            SendMail $SMTPserver $sendermailaddress $usermailaddress $mailBody
-            }
 
+            }
         }
     }
 }
