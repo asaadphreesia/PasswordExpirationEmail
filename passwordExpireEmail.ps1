@@ -1,5 +1,4 @@
 ##############Variables#################
-$verbose = $false
 $notificationFirst = 30
 $notificationSecond = 14
 $notificationThird = 7
