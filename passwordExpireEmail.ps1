@@ -59,8 +59,7 @@ foreach ($user in (Get-ADUser -SearchBase $DN -Filter * -properties mail))
                     $mailBody += "`r`n`r`n-Your Friendly IT Department"
                     $usermailaddress = $user.mail
                     $mailSubject = "Your password will expire in $delta day(s)"
-                    #SendMail $SMTPserver $sendermailaddress $usermailaddress $mailSubject $mailBody
-                    SendMail $SMTPserver $sendermailaddress jeff.seto@hogarthww.com $mailSubject $mailBody
+                    SendMail $SMTPserver $sendermailaddress $usermailaddress $mailSubject $mailBody
                 }
             }
         }
@@ -87,8 +86,7 @@ foreach ($user in (Get-ADUser -SearchBase $DN -Filter * -properties mail))
                             $mailBody += "`r`n`r`n-Your Friendly IT Department"
                             $usermailaddress = $user.mail
                             $mailSubject = "Your password will expire in $delta day(s)"
-                            #SendMail $SMTPserver $sendermailaddress $usermailaddress $mailSubject $mailBody
-                            SendMail $SMTPserver $sendermailaddress jeff.seto@hogarthww.com $mailSubject $mailBody
+                            SendMail $SMTPserver $sendermailaddress $usermailaddress $mailSubject $mailBody
                         }
                 }
 
