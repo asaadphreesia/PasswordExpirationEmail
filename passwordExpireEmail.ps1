@@ -2,9 +2,9 @@
 $notificationFirst = 60
 $notificationSecond = 14
 $notificationThird = 7
-$sendermailaddress = "technyc@hogarthww.com"
-$SMTPserver = "nyc-relay.hogarthww.com"
-$DN = "OU=Hogarth AMER,OU=Users,OU=HogarthWW,DC=hogarthww,DC=prv"
+$sendermailaddress = "ITDept@company.com"
+$SMTPserver = "relay.company.com"
+$DN = "DC=company,DC=com"
 ########################################
 
 ##############Function##################
