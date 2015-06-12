@@ -1,10 +1,10 @@
 ##############Variables#################
-$notificationFirst = 30
+$notificationFirst = 60
 $notificationSecond = 14
 $notificationThird = 7
-$sendermailaddress = "IT@company.com"
-$SMTPserver = "relay.company.com"
-$DN = "DC=company,DC=com"
+$sendermailaddress = "technyc@hogarthww.com"
+$SMTPserver = "nyc-relay.hogarthww.com"
+$DN = "OU=Hogarth AMER,OU=Users,OU=HogarthWW,DC=hogarthww,DC=prv"
 ########################################
 
 ##############Function##################
@@ -24,6 +24,11 @@ function SendMail ($SMTPserver,$sendermailaddress,$usermailaddress,$mailSubject,
 ##############Main######################
 $domainPolicy = Get-ADDefaultDomainPasswordPolicy
 $passwordexpirydefaultdomainpolicy = $domainPolicy.MaxPasswordAge.Days -ne 0
+
+if($passwordexpirydefaultdomainpolicy)            
+{            
+    $defaultdomainpolicyMaxPasswordAge = $domainPolicy.MaxPasswordAge.Days           
+}
 
 foreach ($user in (Get-ADUser -SearchBase $DN -Filter * -properties mail))
 {
@@ -58,7 +63,6 @@ foreach ($user in (Get-ADUser -SearchBase $DN -Filter * -properties mail))
             {
                $delta = ($expirydate - (Get-Date)).Days
                         $comparionresults = (($delta -le $notificationFirst) -OR ($delta -eq $notificationSecond) -OR ($delta -le $notificationThird)) -AND ($delta -ge 1)
-                        [System.Windows.Forms.MessageBox]::Show("Comparion Results", "Comparion Results")
                         if ($comparionresults)
                         {
                             $mailBody = "Hi " + $user.GivenName + ",`r`n`r`n"
@@ -87,7 +91,6 @@ foreach ($user in (Get-ADUser -SearchBase $DN -Filter * -properties mail))
                 {
                         $delta = ($expirydate - (Get-Date)).Days
                         $comparionresults = (($delta -le $notificationFirst) -OR ($delta -eq $notificationSecond) -OR ($delta -le $notificationThird)) -AND ($delta -ge 1)
-                        [System.Windows.Forms.MessageBox]::Show("Comparion Results", "Comparion Results")
                         if ($comparionresults)
                         {
                             $mailBody = "Hi " + $user.GivenName + ",`r`n`r`n"
