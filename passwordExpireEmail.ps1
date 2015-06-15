@@ -47,7 +47,7 @@ foreach ($user in (Get-ADUser -SearchBase $DN -Filter * -properties mail))
             if ($user.accountexpirationdate -gt $expirydate)
             {
                 $delta = ($expirydate - (Get-Date)).Days
-                $comparionresults = (($delta -le $notificationFirst) -OR ($delta -eq $notificationSecond) -OR ($delta -le $notificationThird)) -AND ($delta -ge 1)
+                $comparionresults = (($delta -eq $notificationFirst) -OR ($delta -eq $notificationSecond) -OR ($delta -le $notificationThird)) -AND ($delta -ge 1)
                 if ($comparionresults)            
                 {            
                     $mailBody = "Hi " + $user.GivenName + ",`r`n`r`n"            
@@ -62,7 +62,7 @@ foreach ($user in (Get-ADUser -SearchBase $DN -Filter * -properties mail))
         else
             {
                $delta = ($expirydate - (Get-Date)).Days
-                        $comparionresults = (($delta -le $notificationFirst) -OR ($delta -eq $notificationSecond) -OR ($delta -le $notificationThird)) -AND ($delta -ge 1)
+                        $comparionresults = (($delta -eq $notificationFirst) -OR ($delta -eq $notificationSecond) -OR ($delta -le $notificationThird)) -AND ($delta -ge 1)
                         if ($comparionresults)
                         {
                             $mailBody = "Hi " + $user.GivenName + ",`r`n`r`n"
@@ -90,7 +90,7 @@ foreach ($user in (Get-ADUser -SearchBase $DN -Filter * -properties mail))
                 if ($accountExpiresDate -gt $expirydate)
                 {
                         $delta = ($expirydate - (Get-Date)).Days
-                        $comparionresults = (($delta -le $notificationFirst) -OR ($delta -eq $notificationSecond) -OR ($delta -le $notificationThird)) -AND ($delta -ge 1)
+                        $comparionresults = (($delta -eq $notificationFirst) -OR ($delta -eq $notificationSecond) -OR ($delta -le $notificationThird)) -AND ($delta -ge 1)
                         if ($comparionresults)
                         {
                             $mailBody = "Hi " + $user.GivenName + ",`r`n`r`n"
@@ -107,7 +107,7 @@ foreach ($user in (Get-ADUser -SearchBase $DN -Filter * -properties mail))
             else
             {
                $delta = ($expirydate - (Get-Date)).Days
-                        $comparionresults = (($delta -le $notificationFirst) -OR ($delta -eq $notificationSecond) -OR ($delta -le $notificationThird)) -AND ($delta -ge 1)
+                        $comparionresults = (($delta -eq $notificationFirst) -OR ($delta -eq $notificationSecond) -OR ($delta -le $notificationThird)) -AND ($delta -ge 1)
                         if ($comparionresults)
                         {
                             $mailBody = "Hi " + $user.GivenName + ",`r`n`r`n"
